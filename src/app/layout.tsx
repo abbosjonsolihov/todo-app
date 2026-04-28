@@ -17,6 +17,16 @@ export const metadata: Metadata = {
   description: "A simple todo app built with Next.js",
 };
 
+const themeScript = `
+try {
+  const stored = localStorage.getItem('theme')
+  const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
+  if (stored === 'dark' || (!stored && prefersDark)) {
+    document.documentElement.classList.add('dark')
+  }
+} catch {}
+`.trim();
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -27,7 +37,12 @@ export default function RootLayout({
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+      </head>
+      <body className="min-h-full flex flex-col bg-background text-foreground">
+        {children}
+      </body>
     </html>
   );
 }

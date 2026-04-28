@@ -10,6 +10,8 @@ interface TodoStore {
   toggleTodo: (id: string) => void
   deleteTodo: (id: string) => void
   editTodo: (id: string, text: string) => void
+  setNote: (id: string, note: string) => void
+  setDeadline: (id: string, deadline: number | undefined) => void
   clearCompleted: () => void
 }
 
@@ -43,6 +45,18 @@ export const useTodoStore = create<TodoStore>()(
         set((state) => ({
           todos: state.todos.map((t) =>
             t.id === id ? { ...t, text: text.trim() } : t,
+          ),
+        })),
+      setNote: (id, note) =>
+        set((state) => ({
+          todos: state.todos.map((t) =>
+            t.id === id ? { ...t, note: note || undefined } : t,
+          ),
+        })),
+      setDeadline: (id, deadline) =>
+        set((state) => ({
+          todos: state.todos.map((t) =>
+            t.id === id ? { ...t, deadline } : t,
           ),
         })),
       clearCompleted: () =>
