@@ -6,7 +6,7 @@ import { type Todo } from "@/types/todo"
 
 interface TodoStore {
   todos: Todo[]
-  addTodo: (text: string) => void
+  addTodo: (text: string, note?: string, deadline?: number) => void
   toggleTodo: (id: string) => void
   deleteTodo: (id: string) => void
   editTodo: (id: string, text: string) => void
@@ -19,7 +19,7 @@ export const useTodoStore = create<TodoStore>()(
   persist(
     (set) => ({
       todos: [],
-      addTodo: (text) =>
+      addTodo: (text, note, deadline) =>
         set((state) => ({
           todos: [
             ...state.todos,
@@ -28,6 +28,8 @@ export const useTodoStore = create<TodoStore>()(
               text: text.trim(),
               completed: false,
               createdAt: Date.now(),
+              note: note || undefined,
+              deadline,
             },
           ],
         })),

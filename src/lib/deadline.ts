@@ -1,3 +1,11 @@
+export function todayValue(): string {
+  return tsToDateValue(Date.now())
+}
+
+export function isPastDate(val: string): boolean {
+  return val < todayValue()
+}
+
 export function tsToDateValue(ts: number): string {
   const d = new Date(ts)
   const y = d.getFullYear()

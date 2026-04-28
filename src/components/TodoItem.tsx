@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { useTodoStore } from "@/store/useTodoStore"
 import { type Todo } from "@/types/todo"
-import { tsToDateValue, dateValueToTs, getDeadlineStatus } from "@/lib/deadline"
+import { tsToDateValue, dateValueToTs, getDeadlineStatus, todayValue, isPastDate } from "@/lib/deadline"
 
 interface Props {
   todo: Todo
@@ -16,6 +16,7 @@ export default function TodoItem({ todo }: Props) {
   const [noteDraft, setNoteDraft] = useState(todo.note ?? "")
   const [deadlineOpen, setDeadlineOpen] = useState(false)
   const [deadlineDraft, setDeadlineDraft] = useState(todo.deadline ? tsToDateValue(todo.deadline) : "")
+  const [deadlineError, setDeadlineError] = useState("")
 
   const toggleTodo = useTodoStore((s) => s.toggleTodo)
   const deleteTodo = useTodoStore((s) => s.deleteTodo)
@@ -41,10 +42,20 @@ export default function TodoItem({ todo }: Props) {
 
   function openDeadline() {
     setDeadlineDraft(todo.deadline ? tsToDateValue(todo.deadline) : "")
+    setDeadlineError("")
     setDeadlineOpen(true)
   }
 
+  function handleDeadlineChange(val: string) {
+    setDeadlineDraft(val)
+    setDeadlineError(val && isPastDate(val) ? "Deadline cannot be in the past." : "")
+  }
+
   function commitDeadline() {
+    if (deadlineDraft && isPastDate(deadlineDraft)) {
+      setDeadlineError("Deadline cannot be in the past.")
+      return
+    }
     setDeadline(todo.id, deadlineDraft ? dateValueToTs(deadlineDraft) : undefined)
     setDeadlineOpen(false)
   }
@@ -118,9 +129,10 @@ export default function TodoItem({ todo }: Props) {
         {/* calendar icon */}
         <button
           onClick={deadlineOpen ? commitDeadline : openDeadline}
+          disabled={deadlineOpen && Boolean(deadlineError)}
           aria-label={deadlineOpen ? "Save deadline" : hasDeadline ? "Edit deadline" : "Add deadline"}
           title={deadlineOpen ? "Save deadline" : hasDeadline ? "Edit deadline" : "Add deadline"}
-          className={`shrink-0 transition-colors ${
+          className={`shrink-0 transition-colors disabled:opacity-40 ${
             hasDeadline || deadlineOpen
               ? "text-blue-500 hover:text-blue-600 dark:text-blue-400"
               : "text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
@@ -150,10 +162,18 @@ export default function TodoItem({ todo }: Props) {
             autoFocus
             type="date"
             value={deadlineDraft}
-            onChange={(e) => setDeadlineDraft(e.target.value)}
+            min={todayValue()}
+            onChange={(e) => handleDeadlineChange(e.target.value)}
             onKeyDown={(e) => { if (e.key === "Enter") commitDeadline(); if (e.key === "Escape") setDeadlineOpen(false) }}
-            className="rounded border border-gray-200 bg-gray-50 px-2 py-1 text-sm text-gray-700 focus:border-blue-400 focus:outline-none dark:border-gray-600 dark:bg-gray-900 dark:text-gray-300 dark:focus:[color-scheme:dark]"
+            className={`rounded border px-2 py-1 text-sm focus:outline-none dark:bg-gray-900 dark:text-gray-300 dark:focus:[color-scheme:dark] ${
+              deadlineError
+                ? "border-red-400 bg-red-50 focus:border-red-500 dark:border-red-500 dark:bg-red-900/20"
+                : "border-gray-200 bg-gray-50 focus:border-blue-400 dark:border-gray-600"
+            }`}
           />
+          {deadlineError && (
+            <p className="mt-1 text-xs text-red-500 dark:text-red-400">{deadlineError}</p>
+          )}
           <div className="mt-2 flex gap-2">
             {hasDeadline && (
               <button
@@ -172,7 +192,8 @@ export default function TodoItem({ todo }: Props) {
               </button>
               <button
                 onClick={commitDeadline}
-                className="rounded bg-blue-600 px-2 py-0.5 text-xs font-medium text-white hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600"
+                disabled={Boolean(deadlineError)}
+                className="rounded bg-blue-600 px-2 py-0.5 text-xs font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-40 dark:bg-blue-500 dark:hover:bg-blue-600"
               >
                 Save
               </button>
